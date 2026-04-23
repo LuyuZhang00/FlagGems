@@ -221,6 +221,10 @@ def _launch_gcd(lhs, rhs, out):
 def gcd(self, other, *, out=None):
     logger.debug("GEMS GCD")
     lhs, rhs, promoted_dtype = _materialize_inputs(self, other)
+    if out is not None and not torch.can_cast(promoted_dtype, out.dtype):
+        raise RuntimeError(
+            f"result type {promoted_dtype} can't be cast to the desired output type {out.dtype}"
+        )
     result = _maybe_get_direct_out(out, lhs.shape, promoted_dtype, lhs.device)
     if result is None:
         result = torch.empty_like(lhs, dtype=promoted_dtype)

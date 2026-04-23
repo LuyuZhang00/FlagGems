@@ -192,3 +192,51 @@ def test_gcd_noncontiguous_broadcast(dtype):
         res_out = torch.gcd(lhs, rhs)
 
     utils.gems_assert_equal(res_out, ref_out)
+
+
+@pytest.mark.gcd
+def test_gcd_invalid_dtype():
+    lhs = torch.ones((4, 4), dtype=torch.float32, device=flag_gems.device)
+    rhs = torch.ones((4, 4), dtype=torch.float32, device=flag_gems.device)
+
+    with flag_gems.use_gems():
+        with pytest.raises(TypeError, match="unsupported dtype for gcd"):
+            torch.gcd(lhs, rhs)
+
+
+@pytest.mark.gcd
+@pytest.mark.parametrize("dtype", utils.ALL_INT_DTYPES)
+def test_gcd_broadcast_error(dtype):
+    lhs = torch.ones((2, 3), dtype=dtype, device=flag_gems.device)
+    rhs = torch.ones((4,), dtype=dtype, device=flag_gems.device)
+
+    with flag_gems.use_gems():
+        with pytest.raises(RuntimeError, match="must match"):
+            torch.gcd(lhs, rhs)
+
+
+@pytest.mark.gcd
+@pytest.mark.parametrize("dtype", utils.ALL_INT_DTYPES)
+def test_gcd_out_shape_mismatch(dtype):
+    lhs = torch.ones((2, 3), dtype=dtype, device=flag_gems.device)
+    rhs = torch.ones((2, 3), dtype=dtype, device=flag_gems.device)
+    out = torch.empty((5,), dtype=dtype, device=flag_gems.device)
+
+    with flag_gems.use_gems():
+        with pytest.raises(RuntimeError, match="must match"):
+            torch.gcd(lhs, rhs, out=out)
+
+
+@pytest.mark.gcd
+@pytest.mark.parametrize("dtype", utils.ALL_INT_DTYPES)
+def test_gcd_out_dtype_mismatch(dtype):
+    lhs = torch.ones((2, 3), dtype=dtype, device=flag_gems.device)
+    rhs = torch.ones((2, 3), dtype=dtype, device=flag_gems.device)
+    out = torch.empty((2, 3), dtype=torch.bool, device=flag_gems.device)
+
+    with flag_gems.use_gems():
+        with pytest.raises(
+            RuntimeError,
+            match="can't be cast to the desired output type",
+        ):
+            torch.gcd(lhs, rhs, out=out)
